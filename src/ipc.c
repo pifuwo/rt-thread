@@ -568,7 +568,7 @@ rt_err_t rt_mutex_detach(rt_mutex_t mutex)
     /* wakeup all suspend threads */
     rt_ipc_list_resume_all(&(mutex->parent.suspend_thread));
 
-    /* detach semaphore object */
+    /* detach mutex object */
     rt_object_detach(&(mutex->parent.parent));
 
     return RT_EOK;
@@ -633,7 +633,7 @@ rt_err_t rt_mutex_delete(rt_mutex_t mutex)
     /* wakeup all suspend threads */
     rt_ipc_list_resume_all(&(mutex->parent.suspend_thread));
 
-    /* delete semaphore object */
+    /* delete mutex object */
     rt_object_delete(&(mutex->parent.parent));
 
     return RT_EOK;
@@ -1960,7 +1960,7 @@ RTM_EXPORT(rt_mq_delete);
  *
  * @return the error code
  */
-rt_err_t rt_mq_send(rt_mq_t mq, void *buffer, rt_size_t size)
+rt_err_t rt_mq_send(rt_mq_t mq, const void *buffer, rt_size_t size)
 {
     register rt_ubase_t temp;
     struct rt_mq_message *msg;
@@ -2050,7 +2050,7 @@ RTM_EXPORT(rt_mq_send);
  *
  * @return the error code
  */
-rt_err_t rt_mq_urgent(rt_mq_t mq, void *buffer, rt_size_t size)
+rt_err_t rt_mq_urgent(rt_mq_t mq, const void *buffer, rt_size_t size)
 {
     register rt_ubase_t temp;
     struct rt_mq_message *msg;
