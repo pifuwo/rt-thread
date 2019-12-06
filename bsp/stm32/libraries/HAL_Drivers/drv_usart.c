@@ -22,7 +22,7 @@
     !defined(BSP_USING_UART4) && !defined(BSP_USING_UART5) && !defined(BSP_USING_UART6) && \
     !defined(BSP_USING_UART7) && !defined(BSP_USING_UART8) && !defined(BSP_USING_LPUART1)
     #error "Please define at least one BSP_USING_UARTx"
-    /* this driver can be disabled at menuconfig → RT-Thread Components → Device Drivers */
+    /* this driver can be disabled at menuconfig -> RT-Thread Components -> Device Drivers */
 #endif
 
 #ifdef RT_SERIAL_USING_DMA
@@ -198,7 +198,8 @@ static int stm32_putc(struct rt_serial_device *serial, char c)
     uart = rt_container_of(serial, struct stm32_uart, serial);
     UART_INSTANCE_CLEAR_FUNCTION(&(uart->handle), UART_FLAG_TC);
 #if defined(SOC_SERIES_STM32L4) || defined(SOC_SERIES_STM32F7) || defined(SOC_SERIES_STM32F0) \
-    || defined(SOC_SERIES_STM32L0) || defined(SOC_SERIES_STM32G0) || defined(SOC_SERIES_STM32H7)
+    || defined(SOC_SERIES_STM32L0) || defined(SOC_SERIES_STM32G0) || defined(SOC_SERIES_STM32H7) \
+    || defined(SOC_SERIES_STM32G4)
     uart->handle.Instance->TDR = c;
 #else
     uart->handle.Instance->DR = c;
@@ -218,7 +219,8 @@ static int stm32_getc(struct rt_serial_device *serial)
     if (__HAL_UART_GET_FLAG(&(uart->handle), UART_FLAG_RXNE) != RESET)
     {
 #if defined(SOC_SERIES_STM32L4) || defined(SOC_SERIES_STM32F7) || defined(SOC_SERIES_STM32F0) \
-    || defined(SOC_SERIES_STM32L0) || defined(SOC_SERIES_STM32G0) || defined(SOC_SERIES_STM32H7)
+    || defined(SOC_SERIES_STM32L0) || defined(SOC_SERIES_STM32G0) || defined(SOC_SERIES_STM32H7) \
+    || defined(SOC_SERIES_STM32G4)
         ch = uart->handle.Instance->RDR & 0xff;
 #else
         ch = uart->handle.Instance->DR & 0xff;
@@ -330,7 +332,8 @@ static void uart_isr(struct rt_serial_device *serial)
             __HAL_UART_CLEAR_PEFLAG(&uart->handle);
         }
 #if !defined(SOC_SERIES_STM32L4) && !defined(SOC_SERIES_STM32F7) && !defined(SOC_SERIES_STM32F0) \
-    && !defined(SOC_SERIES_STM32L0) && !defined(SOC_SERIES_STM32G0) && !defined(SOC_SERIES_STM32H7)
+    && !defined(SOC_SERIES_STM32L0) && !defined(SOC_SERIES_STM32G0) && !defined(SOC_SERIES_STM32H7) \
+    && !defined(SOC_SERIES_STM32G4)
         if (__HAL_UART_GET_FLAG(&(uart->handle), UART_FLAG_LBD) != RESET)
         {
             UART_INSTANCE_CLEAR_FUNCTION(&(uart->handle), UART_FLAG_LBD);
@@ -741,10 +744,17 @@ static void stm32_dma_config(struct rt_serial_device *serial, rt_ubase_t flag)
         /* enable DMA clock && Delay after an RCC peripheral clock enabling*/
         SET_BIT(RCC->AHBENR, dma_config->dma_rcc);
         tmpreg = READ_BIT(RCC->AHBENR, dma_config->dma_rcc);
-#elif defined(SOC_SERIES_STM32F4) || defined(SOC_SERIES_STM32F7) || defined(SOC_SERIES_STM32L4)
+#elif defined(SOC_SERIES_STM32F4) || defined(SOC_SERIES_STM32F7) || defined(SOC_SERIES_STM32L4) \
+    || defined(SOC_SERIES_STM32G4)
         /* enable DMA clock && Delay after an RCC peripheral clock enabling*/
         SET_BIT(RCC->AHB1ENR, dma_config->dma_rcc);
         tmpreg = READ_BIT(RCC->AHB1ENR, dma_config->dma_rcc);
+
+#if (defined(SOC_SERIES_STM32L4) || defined(SOC_SERIES_STM32G4)) && defined(DMAMUX1)
+        /* enable DMAMUX clock for L4+ and G4 */
+        __HAL_RCC_DMAMUX1_CLK_ENABLE();
+#endif
+
 #endif
         UNUSED(tmpreg);   /* To avoid compiler warnings */
     }
@@ -763,7 +773,7 @@ static void stm32_dma_config(struct rt_serial_device *serial, rt_ubase_t flag)
 #elif defined(SOC_SERIES_STM32F4) || defined(SOC_SERIES_STM32F7)
     DMA_Handle->Instance                 = dma_config->Instance;
     DMA_Handle->Init.Channel             = dma_config->channel;
-#elif defined(SOC_SERIES_STM32L4) || defined(SOC_SERIES_STM32G0)
+#elif defined(SOC_SERIES_STM32L4) || defined(SOC_SERIES_STM32G0) || defined(SOC_SERIES_STM32G4)
     DMA_Handle->Instance                 = dma_config->Instance;
     DMA_Handle->Init.Request             = dma_config->request;
 #endif
